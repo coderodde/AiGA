@@ -25,7 +25,9 @@ public class Utils {
     public static final List<Character> AMINO_ACID_ALPHABET_LIST;
     public static final Set<Character> AMINO_ACID_ALPHABET_SET;
     
-    public static final Map<String, Character> MAP_CODON_TO_AMINO_ACID;
+    public static final Map<String, Character> MAP_CODON_STRING_TO_AMINO_ACID;
+    
+    public static final Map<Codon, Character> MAP_CODON_TO_AMINOA_ACID;
     
     // The list of all codons:
     public static final List<String> CODONS;
@@ -110,16 +112,17 @@ public class Utils {
         AMINO_ACID_ALPHABET_SET = 
                 Collections.unmodifiableSet(aminoAcidAlphabet);
         
-        Map<String, Character> mapCodonToAminoAcidCharacter = new HashMap<>();
+        Map<String, Character> mapCodonStringToAminoAcidCharacter = 
+                new HashMap<>();
         
         for (Map.Entry<Character, List<String>> e : MAP_AMINO_ACID_TO_CODON_LISTS.entrySet()) {
             for (String codon : e.getValue()) {
-                mapCodonToAminoAcidCharacter.put(codon, e.getKey());
+                mapCodonStringToAminoAcidCharacter.put(codon, e.getKey());
             }
         }
         
-        MAP_CODON_TO_AMINO_ACID =
-                Collections.unmodifiableMap(mapCodonToAminoAcidCharacter);
+        MAP_CODON_STRING_TO_AMINO_ACID =
+                Collections.unmodifiableMap(mapCodonStringToAminoAcidCharacter);
         
         List<String> codons = new ArrayList<>(64);
         
@@ -131,6 +134,20 @@ public class Utils {
         
         codons.sort(Utils::compare);
         CODONS = Collections.unmodifiableList(codons);
+        
+        Map<Codon, Character> mapCodonToAminoAcidCharacter = new HashMap<>(64);
+        
+        for (Map.Entry<Character, List<String>> e 
+                : mapAminoAcidToCodonLists.entrySet()) {
+            
+            for (String codonString : e.getValue()) {
+                mapCodonToAminoAcidCharacter.put(new Codon(codonString), 
+                                                 e.getKey());
+            }
+        }
+        
+        MAP_CODON_TO_AMINOA_ACID = 
+                Collections.unmodifiableMap(mapCodonToAminoAcidCharacter);
     }
     
     public static int compare(String str1, String str2) {
@@ -203,7 +220,7 @@ public class Utils {
     }
     
     public static Character getAminoAcid(String codon) {
-        return MAP_CODON_TO_AMINO_ACID.get(codon);
+        return MAP_CODON_STRING_TO_AMINO_ACID.get(codon);
     }
     
     public static String generateRandomProteinSequence(List<Character> alphabet,
@@ -218,3 +235,4 @@ public class Utils {
         return sb.toString();
     }
 }
+

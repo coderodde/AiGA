@@ -1,5 +1,6 @@
-package fi.helsinki.coderodde.aoga;
+package fi.helsinki.coderodde.aoga.chapter01;
 
+import fi.helsinki.coderodde.aoga.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
