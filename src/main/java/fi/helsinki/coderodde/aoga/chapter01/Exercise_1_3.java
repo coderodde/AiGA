@@ -5,6 +5,7 @@ import fi.helsinki.coderodde.aoga.MultipleGroupPermuter;
 import fi.helsinki.coderodde.aoga.Utils;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,10 +42,12 @@ public class Exercise_1_3 {
         System.out.println("seed = " +  seed);
         int proteinLength = 2 + random.nextInt(29);
         
-        List<Codon> proteinAsCodonList = 
-                generateRandomProteinAsCodonList(
-                        proteinLength, 
-                        random);
+        List<Codon> proteinAsCodonList = Arrays.asList(new Codon("GAT"),  // D
+                                                       new Codon("TGT"),  // C
+                                                       new Codon("GAC")); // D
+//                generateRandomProteinAsCodonList(
+//                        proteinLength, 
+//                        random);
         
         String proteinAsAminoAcids = 
                 convertCodonListToAminoAcidString(proteinAsCodonList);
@@ -161,6 +164,14 @@ public class Exercise_1_3 {
                 new MultipleGroupPermuter<>(indexGroups)
                         .computeGroupPermutations();
         
+        Set<List<List<Integer>>> filteredPermutations = 
+                new HashSet<>(groupPermutations);
+        
+        groupPermutations.clear();
+        groupPermutations.addAll(filteredPermutations);
+        
+        List<List<List<Integer>>> sortedIndexGroups = sort(groupPermutations);
+        
         for (List<List<Integer>> groupPermutation : groupPermutations) {
             for (List<Integer> group : groupPermutation) {
                 System.out.print(group.toString() + " ");
@@ -170,25 +181,52 @@ public class Exercise_1_3 {
         }
         
         List<ProteinPermutation> proteinPermutationList = 
-                computeProteinPermutationList(codonList, groupPermutations);
+                computeProteinPermutationList(codonList, 
+                                              groupPermutations,
+                                              sortedIndexGroups);
         
         proteinPermutationList.sort(new ProteinPermutationComparator());
         
         proteinPermutationList.forEach(System.out::println);
     }
     
+    private static <T> List<List<List<Integer>>> 
+        sort(List<List<List<Integer>>> data) {
+        
+        List<List<List<Integer>>> copy = new ArrayList<>(data.size());
+        
+        for (List<List<Integer>> list : data) {
+            List<List<Integer>> sortedList = new ArrayList<>(list.size());
+            
+            for (List<Integer> l : list) {
+                List<Integer> sorted = new ArrayList<>(l.size());
+                sorted.addAll(l);
+                Collections.sort(l, Integer::compareTo);
+                sortedList.add(l);
+            }
+            
+            copy.add(sortedList);
+        }
+        
+        return copy;
+    }
+    
     private static List<ProteinPermutation> 
         computeProteinPermutationList(
                 List<Codon> proteinAsCodonList,
-                List<List<List<Integer>>> groupPermutations) {
+                List<List<List<Integer>>> groupPermutations,
+                List<List<List<Integer>>> groupPermutationsSorted) {
             
         List<ProteinPermutation> proteinPermutationList = 
                 new ArrayList<>(groupPermutations.size());
         
-        for (List<List<Integer>> listOfIndexGroups : groupPermutations) {
+        for (int i = 0; i < groupPermutations.size(); i++) {
+            List<List<Integer>> listOfIndexGroups = groupPermutations.get(i);
+            List<List<Integer>> listOfIndexGroupsSorted = groupPermutationsSorted.get(i);
             List<Codon> permutedCodonList = 
                     computePermutedProtein(proteinAsCodonList, 
-                                           listOfIndexGroups);
+                                           listOfIndexGroups,
+                                           listOfIndexGroupsSorted);
             
             String permutedAminoAcidString = 
                     convertCodonListToAminoAcidString(permutedCodonList);
@@ -225,24 +263,41 @@ public class Exercise_1_3 {
         
     private static List<Codon> computePermutedProtein(
             List<Codon> proteinAsCodonList,
-            List<List<Integer>> listOfIndexGroups) {
+            List<List<Integer>> listOfIndexGroups,
+            List<List<Integer>> listOfIndexGroupsSorted) {
         
         List<Codon> outputProteinAsCodonList = 
                 new ArrayList<>(proteinAsCodonList.size());
         
-        for (int i = 0; i < proteinAsCodonList.size(); i++) {
+        for (Codon codon : proteinAsCodonList) {
             outputProteinAsCodonList.add(null);
         }
         
-        int codonIndex = 0;
-        
-        for (List<Integer> indexGroup : listOfIndexGroups) {
-            for (Integer index : indexGroup) {
-                outputProteinAsCodonList.add(proteinAsCodonList.get(index));
-//                Codon codon = proteinAsCodonList.get(codonIndex++);
-//                outputProteinAsCodonList.set(index, codon);
+        for (int i = 0; i < listOfIndexGroups.size(); i++) {
+            List<Integer> codonGroupIndices = listOfIndexGroups.get(i);
+            List<Integer> codonGroupIndicesSorted =
+                    listOfIndexGroupsSorted.get(i);
+            
+            for (int j = 0; j < codonGroupIndices.size(); j++) {
+                int codonIndex = codonGroupIndicesSorted.get(j);
+                Codon codonToPlace = proteinAsCodonList.get(codonIndex);
+                int placeIndex = codonGroupIndices.get(j);
+                outputProteinAsCodonList.set(placeIndex, codonToPlace);
             }
         }
+        
+//        for (List<Integer> codonGroupIndices : listOfIndexGroups) {
+//            codonGroupIndices.sort(Integer::compareTo);
+//            
+//            // codonGroupIndices contains all the indices of codons coding the
+//            // same amino acid:
+//            for (Integer codonIndex : codonGroupIndices) {
+//                // The next codon to place into a codon permutation:
+//                Codon codonToPlace = proteinAsCodonList.get(codonIndex);
+//                int placeIndex = mapCodonToOriginalIndex.get(codonToPlace);
+//                outputProteinAsCodonList.set(placeIndex, codonToPlace);
+//            }
+//        }
         
         return outputProteinAsCodonList;
     }    
