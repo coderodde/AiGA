@@ -42,12 +42,10 @@ public class Exercise_1_3 {
         System.out.println("seed = " +  seed);
         int proteinLength = 2 + random.nextInt(29);
         
-        List<Codon> proteinAsCodonList = Arrays.asList(new Codon("GAT"),  // D
-                                                       new Codon("TGT"),  // C
-                                                       new Codon("GAC")); // D
-//                generateRandomProteinAsCodonList(
-//                        proteinLength, 
-//                        random);
+        List<Codon> proteinAsCodonList =
+                generateRandomProteinAsCodonList(
+                        proteinLength, 
+                        random);
         
         String proteinAsAminoAcids = 
                 convertCodonListToAminoAcidString(proteinAsCodonList);
@@ -67,10 +65,6 @@ public class Exercise_1_3 {
                 f(computeZMap(Arrays.asList(proteinAsAminoAcids)));
         
         System.out.println("Source protein f: " + sourceProteinF);
-        
-        for (Map.Entry<Character, Integer> e : proteinFrequencyMap.entrySet()) {
-            System.out.printf("%c -> %d\n", e.getKey(), e.getValue());
-        }
         
         System.out.println("Number of permutations: " + 
                 computeNumberOfPermtuations(proteinFrequencyMap));
@@ -172,14 +166,6 @@ public class Exercise_1_3 {
         
         List<List<List<Integer>>> sortedIndexGroups = sort(groupPermutations);
         
-        for (List<List<Integer>> groupPermutation : groupPermutations) {
-            for (List<Integer> group : groupPermutation) {
-                System.out.print(group.toString() + " ");
-            }
-            
-            System.out.println();
-        }
-        
         List<ProteinPermutation> proteinPermutationList = 
                 computeProteinPermutationList(codonList, 
                                               groupPermutations,
@@ -199,10 +185,9 @@ public class Exercise_1_3 {
             List<List<Integer>> sortedList = new ArrayList<>(list.size());
             
             for (List<Integer> l : list) {
-                List<Integer> sorted = new ArrayList<>(l.size());
-                sorted.addAll(l);
-                Collections.sort(l, Integer::compareTo);
-                sortedList.add(l);
+                List<Integer> sorted = new ArrayList<>(l);
+                Collections.sort(sorted, Integer::compareTo);
+                sortedList.add(sorted);
             }
             
             copy.add(sortedList);
@@ -231,21 +216,82 @@ public class Exercise_1_3 {
             String permutedAminoAcidString = 
                     convertCodonListToAminoAcidString(permutedCodonList);
             
-            Map<String, Double> zMap = 
-                    computeZMap(Arrays.asList(permutedAminoAcidString));
-            
-            double zMapF = f(zMap);
+            double f = computeF(permutedCodonList);
             
             ProteinPermutation proteinPermutation = 
                     new ProteinPermutation(
-                            zMapF,
+                            f,
                             permutedAminoAcidString,
-                            proteinAsCodonList);
+                            permutedCodonList);
             
             proteinPermutationList.add(proteinPermutation);
         }
         
         return proteinPermutationList;
+    }
+        
+    private static double computeF(List<Codon> codonList) {
+        List<Double> zScoreList = computeZScoreList(codonList);
+        
+        double sum = 0.0;
+        
+        for (double z : zScoreList) {
+            sum += z;
+        }
+        
+        return sum / zScoreList.size();
+    }
+        
+    private static List<Double> computeZScoreList(List<Codon> codonList) {
+        List<Double> zScoreList = new ArrayList<>(codonList.size() - 1);
+        Map<String, Integer> codonPairMap = computeCodonPairMap(codonList);
+        
+        for (int i = 0; i < codonList.size() - 1; i++) {
+            Codon codon1 = codonList.get(i);
+            Codon codon2 = codonList.get(i + 1);
+            char aminoAcid1 = Utils.getAminoAcid(codon1.toString());
+            char aminoAcid2 = Utils.getAminoAcid(codon2.toString());
+            int expectedNumberOfOccurrences = 
+                    getFrequencyOfCodonPair(aminoAcid1, aminoAcid2);
+            
+            String aminoAcidPair = 
+                    String.format(
+                            "%c%c", 
+                            aminoAcid1,
+                            aminoAcid2);
+            
+            int observedNumberOfOccurences = 
+                    codonPairMap.get(aminoAcidPair);
+            
+            double zRatio = ((double) observedNumberOfOccurences) /
+                            ((double) expectedNumberOfOccurrences);
+            
+            zScoreList.add(zRatio);
+        }
+        
+        return zScoreList;
+    }
+    
+    private static Map<String, Integer> 
+        computeCodonPairMap(List<Codon> codonList) {
+        Map<String, Integer> map = new HashMap<>();
+        
+        for (int i = 0; i < codonList.size() - 1; i++) {
+            Codon codon1 = codonList.get(i);
+            Codon codon2 = codonList.get(i + 1);
+            char aminoAcid1 = Utils.getAminoAcid(codon1.toString());
+            char aminoAcid2 = Utils.getAminoAcid(codon2.toString());
+            String aminoAcidPair = 
+                    String.format(
+                            "%c%c",
+                            aminoAcid1,
+                            aminoAcid2);
+            
+            map.put(aminoAcidPair,
+                    map.getOrDefault(aminoAcidPair, 0) + 1);
+        }
+        
+        return map;
     }
         
     private static String convertCodonListToAminoAcidString(
@@ -285,19 +331,6 @@ public class Exercise_1_3 {
                 outputProteinAsCodonList.set(placeIndex, codonToPlace);
             }
         }
-        
-//        for (List<Integer> codonGroupIndices : listOfIndexGroups) {
-//            codonGroupIndices.sort(Integer::compareTo);
-//            
-//            // codonGroupIndices contains all the indices of codons coding the
-//            // same amino acid:
-//            for (Integer codonIndex : codonGroupIndices) {
-//                // The next codon to place into a codon permutation:
-//                Codon codonToPlace = proteinAsCodonList.get(codonIndex);
-//                int placeIndex = mapCodonToOriginalIndex.get(codonToPlace);
-//                outputProteinAsCodonList.set(placeIndex, codonToPlace);
-//            }
-//        }
         
         return outputProteinAsCodonList;
     }    
@@ -395,8 +428,6 @@ public class Exercise_1_3 {
             
             if (result.containsKey(codonPair)) {
                 result.put(codonPair, result.get(codonPair) / e.getValue());
-            } else {
-                System.out.println("hello");
             }
         }
         
@@ -478,7 +509,7 @@ class ProteinPermutation {
     ProteinPermutation(double f, String proteinAsAminoAcidString, List<Codon> proteinAsCodonList) {
         this.f = f;
         this.proteinAsAminoAcidString = proteinAsAminoAcidString;
-        this.proteinAsCodonList = proteinAsCodonList;
+        this.proteinAsCodonList = new ArrayList<>(proteinAsCodonList);
     }
     
     @Override
@@ -487,7 +518,7 @@ class ProteinPermutation {
         
         sb.append(
                 String.format(
-                        "%.3f: %s %s",
+                        "%.6f: %s %s",
                         f,
                         proteinAsAminoAcidString, 
                         convertCodonListToString()));
