@@ -18,8 +18,8 @@ import java.util.TreeMap;
 public class Exercise_1_3 {
     
     public static void main(String[] args) {
-//        subTask1();
-//        System.out.println();
+        subTask1();
+        System.out.println();
         subTask2V2();
     }
     
@@ -40,9 +40,16 @@ public class Exercise_1_3 {
         seed = 13L;
         Random random = new Random(seed);
         System.out.println("seed = " +  seed);
-        int proteinLength = 2 + random.nextInt(29);
+        int proteinLength = 2 + random.nextInt(90);
         
-        List<Codon> proteinAsCodonList =
+        System.out.println("Source protein length: " + proteinLength);
+        
+//        List<Codon> proteinAsCodonList = Arrays.asList(new Codon("AAT"),
+//                                                       new Codon("CCT"),
+//                                                       new Codon("AAC"),
+//                                                       new Codon("CCA"),
+//                                                       new Codon("CCG"));
+        List<Codon> proteinAsCodonList = 
                 generateRandomProteinAsCodonList(
                         proteinLength, 
                         random);
@@ -67,66 +74,18 @@ public class Exercise_1_3 {
         System.out.println("Source protein f: " + sourceProteinF);
         
         System.out.println("Number of permutations: " + 
-                computeNumberOfPermtuations(proteinFrequencyMap));
+                computeNumberOfPermutations(proteinFrequencyMap));
         
         processProtein(proteinAsAminoAcids, proteinAsCodonList);
     }
     
     private static long 
-        computeNumberOfPermtuations(
+        computeNumberOfPermutations(
                 Map<Character, Integer> proteinFrequencyMap) {
         long c = 1L;
         
         for (Map.Entry<Character, Integer> e : proteinFrequencyMap.entrySet()) {
             c *= Utils.factorial(e.getValue());
-        }
-        
-        return c;
-    }
-    
-    static void subTask2() {
-        System.out.println("--- Subtask 1.3.2 ---");
-        long seed = System.currentTimeMillis();
-        seed = 13L;
-        Random random = new Random(seed);
-        System.out.println("seed = " + seed);
-        
-        int proteinLength = 2 + random.nextInt(39);
-        String protein =
-                Utils.generateRandomProteinSequence(
-                        Utils.AMINO_ACID_ALPHABET_LIST, 
-                        proteinLength, 
-                        random);
-        
-        System.out.println("Target protein: " + protein);
-        System.out.println("Target codon list: " );
-        
-        Map<Character, Integer> proteinFrequencyMap = 
-                computeProteinFrequencyMap(protein);
-        
-        System.out.println("--- Protein codon freqencies ---");
-        System.out.println("Map: " + proteinFrequencyMap);
-        System.out.println("Number of permutations: " + 
-                computeNumberOfPermutations(proteinFrequencyMap));
-        
-        System.out.println("Source protein S: " + protein);
-        
-        Map<String, Double> zMap = computeZMap(Arrays.asList(protein));
-        System.out.println("f(S): " + f(zMap));
-        
-        List<Codon> sourceProteinAsCodonList = getRandomCodonSequence(random);
-        
-        System.out.println(Codon.codonListToString(sourceProteinAsCodonList));
-        
-        processProtein(protein, sourceProteinAsCodonList);
-    }
-    
-    private static long computeNumberOfPermutations(
-            Map<Character, Integer> proteinFrequencyMap) {
-        long c = 1L;
-        
-        for (Integer aminoAcidCount : proteinFrequencyMap.values()) {
-            c *= aminoAcidCount;
         }
         
         return c;
@@ -232,7 +191,6 @@ public class Exercise_1_3 {
         
     private static double computeF(List<Codon> codonList) {
         List<Double> zScoreList = computeZScoreList(codonList);
-        
         double sum = 0.0;
         
         for (double z : zScoreList) {
@@ -251,8 +209,9 @@ public class Exercise_1_3 {
             Codon codon2 = codonList.get(i + 1);
             char aminoAcid1 = Utils.getAminoAcid(codon1.toString());
             char aminoAcid2 = Utils.getAminoAcid(codon2.toString());
-            int expectedNumberOfOccurrences = 
-                    getFrequencyOfCodonPair(aminoAcid1, aminoAcid2);
+            int expectedNumberOfOccurences = 
+                    getFrequencyOfCodonPair(aminoAcid1, 
+                                            aminoAcid2);
             
             String aminoAcidPair = 
                     String.format(
@@ -264,7 +223,7 @@ public class Exercise_1_3 {
                     codonPairMap.get(aminoAcidPair);
             
             double zRatio = ((double) observedNumberOfOccurences) /
-                            ((double) expectedNumberOfOccurrences);
+                            ((double) expectedNumberOfOccurences);
             
             zScoreList.add(zRatio);
         }
@@ -518,7 +477,7 @@ class ProteinPermutation {
         
         sb.append(
                 String.format(
-                        "%.6f: %s %s",
+                        "%f: %s %s",
                         f,
                         proteinAsAminoAcidString, 
                         convertCodonListToString()));
